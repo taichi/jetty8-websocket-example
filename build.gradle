@@ -1,0 +1,74 @@
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'eclipse'
+
+repositories { mavenCentral() }
+
+dependencies {
+	groovy 'org.codehaus.groovy:groovy-all:1.8.+'
+
+	compile "org.slf4j:slf4j-api:1.6.+"
+	compile 'ch.qos.logback:logback-classic:1.0.+'
+
+	compile 'org.mortbay.jetty:servlet-api:3.0.20100224'
+	[
+		'jetty-server',
+		'jetty-servlet',
+		'jetty-websocket'
+	].each {
+		compile ("org.eclipse.jetty:$it:8.+") { exclude group: 'org.eclipse.jetty.orbit' }
+	}
+
+	testCompile 'junit:junit:4.+'
+}
+
+sourceSets {
+	main {
+		java.srcDir 'src/java'
+		resources.srcDir 'src/java'
+	}
+	scripts.groovy.srcDir 'scripts'
+	test {
+		groovy.srcDir 'test/groovy'
+		resources.srcDir 'test/groovy'
+	}
+}
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+def encoding = { it.encoding = 'UTF-8' }
+tasks.withType(AbstractCompile) each { encoding it.options }
+tasks.withType(GroovyCompile) each { encoding it.groovyOptions }
+
+eclipse {
+	project {
+		file {
+			whenMerged {
+				def pref = 'org.eclipse.jdt.groovy.core.prefs'
+				File dest = file(".settings/$pref")
+				if(dest.exists() == false) {
+					dest.text = file("conf/$pref").text
+				}
+			}
+		}
+	}
+	classpath {
+		containers = [
+			'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7'
+		]
+		defaultOutputDir = file('bin')
+		file {
+			withXml {
+				// for tailing classpath container
+				def n = it.asNode()
+				def gp = [
+					'GROOVY_SUPPORT',
+					'GROOVY_DSL_SUPPORT'
+				]
+				n.children().removeAll { gp.contains(it.@path) }
+
+			}
+		}
+	}
+}

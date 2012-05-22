@@ -1,0 +1,7 @@
+/.*
+/build
+/bin
+!/.gitignore
+/gradle*
+!gradlew
+!gradlew.bat
